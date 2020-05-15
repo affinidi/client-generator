@@ -53,10 +53,6 @@ perl -pi -e 's/^  "name": "/  "name": "\@affinityproject\//' "$CLIENT_DIR/packag
 rm "$CLIENT_DIR/src/.gitignore"
 cp -rvf "$GENERATOR_DIR"/template/* "$GENERATOR_DIR"/template/.* "$CLIENT_DIR/"
 
-perl -pi -e "s/import (.*) = require\((.*)\)/import \1 from \2/g" "$CLIENT_DIR/src"/**/*
-perl -pi -e "s/ == / === /g" "$CLIENT_DIR/src"/**/*
-perl -pi -e "s/http.ClientResponse/http.IncomingMessage/g" "$CLIENT_DIR/src"/**/*
-
 pushd "$CLIENT_DIR"
 npm install --save axios '@types/axios'
 npx prettier --write ./src/**/*.ts
