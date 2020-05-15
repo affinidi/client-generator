@@ -1,0 +1,64 @@
+#!/bin/zsh
+
+SERVICE_NAME="$1"
+OUTPUT_DIR="$2"
+
+CLIENT_NAME="$SERVICE_NAME-client"
+CLIENT_DIR="$OUTPUT_DIR/$CLIENT_NAME"
+GENERATOR_DIR="./"
+OPENAPI_GENERATOR_JAR_PATH="$GENERATOR_DIR/openapi-generator-cli.jar"
+if [[ ! -v DOCUMENTATION_URL ]]; then 
+  DOCUMENTATION_URL="http://localhost:3000/documentation/json"
+fi
+
+echo "Output directory: $OUTPUT_DIR"
+echo "Service name: $SERVICE_NAME"
+echo "Client name: $CLIENT_NAME"
+echo "Client dir: $CLIENT_DIR"
+
+if [[ -d "$CLIENT_DIR" ]]; then 
+  if [[ -v FORCE_OVERWRITE ]]; then
+    echo 'Overwriting existing client...'
+  else
+    read CONF\?"Client dir \"$CLIENT_DIR\" exists, delete and regenerate? (y/N) "
+    if [[ $CONF == 'y' ]]; then
+      echo 'Overwriting existing client...'
+    else
+      exit
+    fi
+  fi
+  rm -rf "$CLIENT_DIR"
+fi
+
+# Get the OpenAPI generator CLI tool and save to ./generators/client/
+if [[ ! -f "$OPENAPI_GENERATOR_JAR_PATH" ]]; then 
+  wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/4.3.1/openapi-generator-cli-4.3.1.jar -O "$OPENAPI_GENERATOR_JAR_PATH"
+fi
+
+# Create project from TSDX template in OUTPUT_DIR
+pushd "$OUTPUT_DIR";
+tsdx create --template basic "$CLIENT_NAME"
+popd; 
+
+# Pull API JSON from the (hopefully running) service
+# mkdir -p "$CLIENT_DIR/src"
+wget $DOCUMENTATION_URL -O "$CLIENT_DIR/api.json"
+java -jar "$OPENAPI_GENERATOR_JAR_PATH" generate -o "$CLIENT_DIR/src/" -i "$CLIENT_DIR/api.json" -g typescript-axios --package-name "$CLIENT_NAME"
+
+# Project prep
+# Rename package within @affinityproject scope
+perl -pi -e 's/^  "name": "/  "name": "\@affinityproject\//' "$CLIENT_DIR/package.json"
+
+# mv "$CLIENT_DIR/src/.gitignore" "$CLIENT_DIR/"
+rm "$CLIENT_DIR/src/.gitignore"
+cp -rvf "$GENERATOR_DIR"/template/* "$GENERATOR_DIR"/template/.* "$CLIENT_DIR/"
+
+perl -pi -e "s/import (.*) = require\((.*)\)/import \1 from \2/g" "$CLIENT_DIR/src"/**/*
+perl -pi -e "s/ == / === /g" "$CLIENT_DIR/src"/**/*
+perl -pi -e "s/http.ClientResponse/http.IncomingMessage/g" "$CLIENT_DIR/src"/**/*
+
+pushd "$CLIENT_DIR"
+npm install --save axios '@types/axios'
+npx prettier --write ./src/**/*.ts
+tsdx lint src test --fix 
+npm run build
