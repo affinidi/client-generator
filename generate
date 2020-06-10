@@ -51,7 +51,8 @@ perl -pi -e "s/\@/PLACEHOLDERATSIGNPLACEHOLDER/g" "$CLIENT_DIR/api.json"
 java -jar "$OPENAPI_GENERATOR_JAR_PATH" generate -o "$CLIENT_DIR/src/" -i "$CLIENT_DIR/api.json" -g typescript-axios -c ./config.yaml --package-name "$CLIENT_NAME"
 
 # And then add the @ signs back in...
-perl -pi -e "s/ PLACEHOLDERATSIGNPLACEHOLDER(\w*):/ '\@\1':/g" $CLIENT_DIR/api.json $CLIENT_DIR/src/**/*
+perl -pi -e "s/PLACEHOLDERATSIGNPLACEHOLDER/\@/g" $CLIENT_DIR/api.json 
+perl -pi -e "s/ PLACEHOLDERATSIGNPLACEHOLDER(\w*):/ '\@\1':/g" $CLIENT_DIR/src/**/*
 
 
 # Project prep
