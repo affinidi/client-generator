@@ -63,6 +63,8 @@ perl -pi -e 's/^  "name": "/  "name": "\@affinityproject\//' "$CLIENT_DIR/packag
 # mv "$CLIENT_DIR/src/.gitignore" "$CLIENT_DIR/"
 rm "$CLIENT_DIR/src/.gitignore"
 cp -rvf "$GENERATOR_DIR"/template/* "$GENERATOR_DIR"/template/.* "$CLIENT_DIR/"
+rm "$CLIENT_DIR/test/blah.test.ts"
+mv "$CLIENT_DIR/blah.test.ts" "$CLIENT_DIR/test/blah.test.ts"
 
 pushd "$CLIENT_DIR"
 npm install --save axios '@types/axios'
