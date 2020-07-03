@@ -7,7 +7,7 @@ CLIENT_NAME="$SERVICE_NAME-client"
 CLIENT_DIR="$OUTPUT_DIR/$CLIENT_NAME"
 GENERATOR_DIR="./"
 OPENAPI_GENERATOR_JAR_PATH="$GENERATOR_DIR/openapi-generator-cli.jar"
-if [[ ! -v DOCUMENTATION_URL ]]; then 
+if [[ ! -v DOCUMENTATION_URL ]]; then
   DOCUMENTATION_URL="http://localhost:3000/documentation/json"
 fi
 
@@ -16,7 +16,7 @@ echo "Service name: $SERVICE_NAME"
 echo "Client name: $CLIENT_NAME"
 echo "Client dir: $CLIENT_DIR"
 
-if [[ -d "$CLIENT_DIR" ]]; then 
+if [[ -d "$CLIENT_DIR" ]]; then
   if [[ -v FORCE_OVERWRITE ]]; then
     echo 'Overwriting existing client...'
   else
@@ -31,14 +31,14 @@ if [[ -d "$CLIENT_DIR" ]]; then
 fi
 
 # Get the OpenAPI generator CLI tool and save to ./generators/client/
-if [[ ! -f "$OPENAPI_GENERATOR_JAR_PATH" ]]; then 
+if [[ ! -f "$OPENAPI_GENERATOR_JAR_PATH" ]]; then
   wget https://repo1.maven.org/maven2/org/openapitools/openapi-generator-cli/4.3.1/openapi-generator-cli-4.3.1.jar -O "$OPENAPI_GENERATOR_JAR_PATH"
 fi
 
 # Create project from TSDX template in OUTPUT_DIR
 pushd "$OUTPUT_DIR";
-tsdx create --template basic "$CLIENT_NAME"
-popd; 
+npx tsdx create --template basic "$CLIENT_NAME"
+popd;
 
 # Pull API JSON from the (hopefully running) service
 # mkdir -p "$CLIENT_DIR/src"
@@ -51,7 +51,7 @@ perl -pi -e "s/\@/PLACEHOLDERATSIGNPLACEHOLDER/g" "$CLIENT_DIR/api.json"
 java -jar "$OPENAPI_GENERATOR_JAR_PATH" generate -o "$CLIENT_DIR/src/" -i "$CLIENT_DIR/api.json" -g typescript-axios -c ./config.yaml --package-name "$CLIENT_NAME"
 
 # And then add the @ signs back in...
-perl -pi -e "s/PLACEHOLDERATSIGNPLACEHOLDER/\@/g" $CLIENT_DIR/api.json 
+perl -pi -e "s/PLACEHOLDERATSIGNPLACEHOLDER/\@/g" $CLIENT_DIR/api.json
 perl -pi -e "s/ PLACEHOLDERATSIGNPLACEHOLDER([^:]*): / '\@\1': /g" $CLIENT_DIR/src/**/*
 perl -pi -e "s/PLACEHOLDERATSIGNPLACEHOLDER/\@/g" $CLIENT_DIR/src/**/*
 
@@ -68,6 +68,9 @@ mv "$CLIENT_DIR/blah.test.ts" "$CLIENT_DIR/test/blah.test.ts"
 
 pushd "$CLIENT_DIR"
 npm install --save axios '@types/axios'
+npm install --save-dev '@affinityproject/eslint-config' '@affinityproject/prettier-config' '@typescript-eslint/eslint-plugin' '@typescript-eslint/parser' eslint eslint-config-prettier eslint-plugin-prettier prettier
 npx prettier --write ./src/**/*.ts
-tsdx lint src test --fix 
+npm run lint -- src test --fix
+rm -f yarn.lock
+rm -rf test
 npm run build

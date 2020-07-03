@@ -1,1 +1,1 @@
-module.exports = require('@bloomprotocol/prettier-config')
+module.exports = require('@affinityproject/prettier-config')
